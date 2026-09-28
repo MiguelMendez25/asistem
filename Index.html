@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Control de asistencia</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+
+        <h1>Control de asistencia</h1>
+
+        <div class="informacion-clase">
+
+            <div>
+                <strong>Docente</strong>
+                <p>Nombre del docente</p>
+            </div>
+
+            <div>
+                <strong>Curso</strong>
+
+                <select id="curso">
+                    <option>11°1</option>
+                    <option>11°2</option>
+                    <option>11°3</option>
+                    <option>11°4</option>
+                    <option>11°5</option>
+                </select>
+            </div>
+
+            <div>
+                <strong>Fecha</strong>
+                <p id="fecha"></p>
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main>
+
+        <!-- RESUMEN -->
+
+        <section class="resumen">
+
+            <div class="tarjeta">
+                <span>Total</span>
+                <strong id="total">0</strong>
+            </div>
+
+            <div class="tarjeta">
+                <span>Asistieron</span>
+                <strong id="asistieron">0</strong>
+            </div>
+
+            <div class="tarjeta">
+                <span>Faltaron</span>
+                <strong id="faltaron">0</strong>
+            </div>
+
+            <div class="tarjeta">
+                <span>Con excusa</span>
+                <strong id="excusas">0</strong>
+            </div>
+
+            <div class="tarjeta">
+                <span>Sin registrar</span>
+                <strong id="sinRegistrar">0</strong>
+            </div>
+
+        </section>
+
+
+        <!-- HERRAMIENTAS -->
+
+        <section class="herramientas">
+
+            <input
+                type="text"
+                id="busqueda"
+                placeholder="🔎 Buscar estudiante..."
+            >
+
+            <select id="filtro">
+
+                <option value="todos">
+                    Todos
+                </option>
+
+                <option value="sin-registrar">
+                    Sin registrar
+                </option>
+
+                <option value="asistio">
+                    Asistieron
+                </option>
+
+                <option value="falto">
+                    Faltaron
+                </option>
+
+                <option value="excusa">
+                    Con excusa
+                </option>
+
+            </select>
+
+        </section>
+
+
+        <!-- AVISO -->
+
+        <div id="aviso" class="aviso">
+            ⚠️ Hay estudiantes sin registrar.
+        </div>
+
+
+        <!-- LISTA -->
+
+        <section>
+
+            <h2>Lista de estudiantes</h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>#</th>
+                        <th>Estudiante</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="lista-estudiantes">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+
+        <!-- GUARDAR -->
+
+        <section class="guardar">
+
+            <button id="guardar">
+                ✓ Guardar asistencia
+            </button>
+
+        </section>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
+
