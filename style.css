@@ -52,32 +52,33 @@ main {
 ================================ */
 
 .resumen {
-    display: grid;
-    grid-template-columns:
-        repeat(5, 1fr);
-
-    gap: 15px;
-
-    margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
 }
 
 .tarjeta {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
     background: white;
-    padding: 20px;
-    border-radius: 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
     border: 1px solid #ddd;
 }
 
 .tarjeta span {
-    display: block;
-    font-size: 14px;
-    color: #666;
+    font-size: 13px;
+    color: #555;
 }
 
 .tarjeta strong {
-    display: block;
-    font-size: 28px;
-    margin-top: 8px;
+    font-size: 20px;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
 }
 
 
@@ -87,19 +88,71 @@ main {
 
 .herramientas {
     display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-bottom: 12px;
+}
+
+.consultas {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1 1 360px;
+    gap: 8px;
+    min-width: 0;
+}
+
+.acciones-masivas {
+    position: relative;
+    border-left: 1px solid #d6dce2;
+    padding-left: 16px;
 }
 
 .herramientas input,
 .herramientas select {
-    padding: 12px;
+    min-height: 44px;
+    padding: 8px 10px;
     border: 1px solid #ccc;
     border-radius: 6px;
 }
 
 .herramientas input {
-    flex: 1;
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+#marcar-todos {
+    min-height: 44px;
+    margin: 0;
+    color: #243b53;
+    font-weight: bold;
+}
+
+.menu-masivo {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 10;
+    width: max-content;
+    min-width: 100%;
+    max-width: calc(100vw - 40px);
+    padding: 4px;
+    border: 1px solid #d6dce2;
+    border-radius: 6px;
+    background: white;
+    box-shadow: 0 4px 14px #0002;
+}
+
+.menu-masivo button {
+    display: block;
+    width: 100%;
+    min-height: 40px;
+    margin: 0;
+    border-color: transparent;
+    color: #222;
+    text-align: left;
+    font: inherit;
+    white-space: nowrap;
 }
 
 
@@ -130,14 +183,90 @@ table {
     background: white;
 }
 
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+.cabecera-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.lista-asistencia h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+#cantidad-visible,
+#sin-coincidencias {
+    color: #555;
+    font-size: 14px;
+}
+
+#sin-coincidencias {
+    margin: 0;
+    padding: 20px 12px;
+    text-align: center;
+    background: white;
+}
+
+.numero-estudiante {
+    width: 40px;
+    text-align: center;
+    color: #666;
+    white-space: nowrap;
+}
+
+td.numero-estudiante {
+    position: relative;
+    padding-left: 12px;
+}
+
+td.numero-estudiante::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    bottom: 9px;
+    left: 3px;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--color-estado);
+}
+
+.nombre-estudiante {
+    min-width: 240px;
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.columna-acciones {
+    width: 1%;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.acciones-asistencia {
+    display: grid;
+    grid-template-columns: repeat(5, max-content);
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
 th,
 td {
-    padding: 14px;
+    padding: 4px 8px;
     border-bottom: 1px solid #ddd;
     text-align: left;
 }
 
 th {
+    padding-top: 8px;
+    padding-bottom: 8px;
     background: #f0f2f4;
 }
 
@@ -157,6 +286,158 @@ button {
 
 button:hover {
     background: #eee;
+}
+
+.boton-estado {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin: 0;
+    min-height: 44px;
+    padding: 6px 8px;
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: nowrap;
+    color: #303846;
+    background: white;
+    border-color: #cbd2d9;
+}
+
+/* Se reserva el espacio de la marca para evitar saltos al seleccionar. */
+.boton-estado::before {
+    content: "";
+    flex: 0 0 10px;
+    font-weight: bold;
+}
+
+/* Cada color se comparte entre la barra de la fila y el botón seleccionado. */
+[data-estado="sin-registrar"] {
+    --color-estado: #d6dce2;
+}
+
+[data-estado="asistio"] {
+    --color-estado: #236841;
+    --texto-estado: white;
+}
+
+[data-estado="falto-con-excusa"] {
+    --color-estado: #245d90;
+    --texto-estado: white;
+}
+
+[data-estado="falto-sin-excusa"] {
+    --color-estado: #b4232c;
+    --texto-estado: white;
+}
+
+[data-estado="reportado"] {
+    --color-estado: #b45309;
+    --texto-estado: white;
+}
+
+[data-estado="llego-tarde"] {
+    --color-estado: #f6cc56;
+    --texto-estado: #3d2a00;
+}
+
+.boton-estado:hover {
+    background: #f0f2f4;
+    border-color: #89939e;
+}
+
+.boton-estado.seleccionado {
+    background: var(--color-estado);
+    color: var(--texto-estado);
+    border-color: var(--color-estado);
+    box-shadow: inset 0 0 0 1px white;
+}
+
+.boton-estado.seleccionado::before {
+    content: "✓";
+}
+
+button:focus-visible,
+.herramientas input:focus-visible,
+.herramientas select:focus-visible {
+    outline: 3px solid #243b53;
+    outline-offset: 2px;
+}
+
+
+/* ================================
+   CONFIRMACIÓN Y NOTIFICACIÓN
+================================ */
+
+#confirmacion-masiva {
+    width: min(460px, calc(100% - 32px));
+    max-height: calc(100% - 32px);
+    margin: auto;
+    padding: 0;
+    border: 1px solid #cbd2d9;
+    border-radius: 10px;
+    background: white;
+    color: #222;
+    font: inherit;
+}
+
+#confirmacion-masiva::backdrop {
+    background: #18263580;
+}
+
+.contenido-modal {
+    padding: 24px;
+}
+
+.contenido-modal h2 {
+    margin: 0 0 16px;
+    font-size: 21px;
+}
+
+.contenido-modal p {
+    line-height: 1.5;
+}
+
+#ayuda-confirmacion {
+    color: #555;
+    font-size: 14px;
+}
+
+.botones-modal {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.botones-modal button {
+    min-height: 44px;
+    margin: 0;
+    font: inherit;
+}
+
+#confirmar-masiva {
+    background: #243b53;
+    border-color: #243b53;
+    color: white;
+}
+
+.notificacion {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 20;
+    max-width: min(400px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.notificacion:not(:empty) {
+    padding: 12px 16px;
+    border-radius: 6px;
+    background: #243b53;
+    color: white;
+    box-shadow: 0 3px 12px #0002;
 }
 
 

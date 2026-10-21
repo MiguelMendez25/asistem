@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Control de asistencia</title>
+    <title>Asistem</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
@@ -14,7 +14,7 @@
 
     <header>
 
-        <h1>Control de asistencia</h1>
+        <h1>Asistem</h1>
 
         <div class="informacion-clase">
 
@@ -29,7 +29,7 @@
                 <select id="curso">
                     <option>11°1</option>
                     <option>11°2</option>
-                    <option>11°3</option>
+                    <option selected>11°3</option>
                     <option>11°4</option>
                     <option>11°5</option>
                 </select>
@@ -49,32 +49,14 @@
 
         <!-- RESUMEN -->
 
-        <section class="resumen">
+        <section id="resumen" class="resumen" aria-label="Resumen de asistencia">
 
             <div class="tarjeta">
                 <span>Total</span>
                 <strong id="total">0</strong>
             </div>
 
-            <div class="tarjeta">
-                <span>Asistieron</span>
-                <strong id="asistieron">0</strong>
-            </div>
-
-            <div class="tarjeta">
-                <span>Faltaron</span>
-                <strong id="faltaron">0</strong>
-            </div>
-
-            <div class="tarjeta">
-                <span>Con excusa</span>
-                <strong id="excusas">0</strong>
-            </div>
-
-            <div class="tarjeta">
-                <span>Sin registrar</span>
-                <strong id="sinRegistrar">0</strong>
-            </div>
+            <!-- Las tarjetas de los estados se crean desde script.js. -->
 
         </section>
 
@@ -83,35 +65,30 @@
 
         <section class="herramientas">
 
-            <input
-                type="text"
-                id="busqueda"
-                placeholder="🔎 Buscar estudiante..."
-            >
+            <div class="consultas">
+                <input
+                    type="text"
+                    id="busqueda"
+                    aria-label="Buscar estudiante"
+                    placeholder="🔎 Buscar estudiante..."
+                >
 
-            <select id="filtro">
+                <select id="filtro" aria-label="Filtrar por estado de asistencia">
+                    <option value="todos">Todos</option>
+                    <!-- Las opciones de los estados se crean desde script.js. -->
+                </select>
+            </div>
 
-                <option value="todos">
-                    Todos
-                </option>
-
-                <option value="sin-registrar">
-                    Sin registrar
-                </option>
-
-                <option value="asistio">
-                    Asistieron
-                </option>
-
-                <option value="falto">
-                    Faltaron
-                </option>
-
-                <option value="excusa">
-                    Con excusa
-                </option>
-
-            </select>
+            <div class="acciones-masivas">
+                <button type="button" id="marcar-todos" aria-haspopup="menu"
+                    aria-expanded="false" aria-controls="menu-masivo">
+                    Marcar todos como… <span aria-hidden="true">▾</span>
+                </button>
+                <div id="menu-masivo" class="menu-masivo" role="menu"
+                    aria-labelledby="marcar-todos" hidden>
+                    <!-- Las cinco acciones se crean desde script.js. -->
+                </div>
+            </div>
 
         </section>
 
@@ -125,19 +102,22 @@
 
         <!-- LISTA -->
 
-        <section>
+        <section class="lista-asistencia">
 
-            <h2>Lista de estudiantes</h2>
+            <div class="cabecera-lista">
+                <h2>Lista de estudiantes</h2>
+                <span id="cantidad-visible" aria-live="polite"></span>
+            </div>
 
+            <div class="tabla-contenedor">
             <table>
 
                 <thead>
 
                     <tr>
-                        <th>#</th>
-                        <th>Estudiante</th>
-                        <th>Estado</th>
-                        <th>Acciones</th>
+                        <th scope="col" class="numero-estudiante">#</th>
+                        <th scope="col">Estudiante</th>
+                        <th scope="col" class="columna-acciones">Acciones</th>
                     </tr>
 
                 </thead>
@@ -148,6 +128,11 @@
                 </tbody>
 
             </table>
+            </div>
+
+            <p id="sin-coincidencias" hidden>
+                No hay estudiantes que coincidan con la búsqueda y el filtro
+            </p>
 
         </section>
 
@@ -163,6 +148,21 @@
         </section>
 
     </main>
+
+    <dialog id="confirmacion-masiva" aria-labelledby="titulo-confirmacion"
+        aria-describedby="mensaje-confirmacion ayuda-confirmacion">
+        <div class="contenido-modal">
+            <h2 id="titulo-confirmacion"></h2>
+            <p id="mensaje-confirmacion"></p>
+            <p id="ayuda-confirmacion">Después podrás modificar individualmente las excepciones.</p>
+            <div class="botones-modal">
+                <button type="button" id="cancelar-masiva" autofocus>Cancelar</button>
+                <button type="button" id="confirmar-masiva" disabled>Marcar todos</button>
+            </div>
+        </div>
+    </dialog>
+
+    <div id="notificacion" class="notificacion" role="status" aria-live="polite" aria-atomic="true"></div>
 
 
     <script src="script.js"></script>

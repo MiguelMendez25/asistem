@@ -238,6 +238,30 @@ const estudiantes = [
 
 
 // ================================
+// ESTADOS DE ASISTENCIA
+// ================================
+
+// Sin registrar es el estado técnico inicial; solo los oficiales tienen botón.
+// texto es el nombre completo; textoBoton solo se indica cuando se abrevia.
+// El filtro, el resumen y las acciones comparten esta definición.
+const estadosAsistencia = [
+    { valor: "sin-registrar", texto: "Sin registrar", oficial: false },
+    { valor: "asistio", texto: "Asistió", oficial: true },
+    { valor: "falto-con-excusa", texto: "Faltó con excusa", textoBoton: "Con excusa", oficial: true },
+    { valor: "falto-sin-excusa", texto: "Faltó sin excusa", textoBoton: "Sin excusa", oficial: true },
+    {
+        valor: "reportado",
+        texto: "Reportado",
+        oficial: true,
+        descripcion: "Estuvo presente anteriormente en la institución, pero no ingresó a una clase posterior."
+    },
+    { valor: "llego-tarde", texto: "Llegó tarde", textoBoton: "Tarde", oficial: true }
+];
+
+const estadosOficiales = estadosAsistencia.filter(estado => estado.oficial);
+
+
+// ================================
 // ELEMENTOS HTML
 // ================================
 
@@ -250,6 +274,65 @@ const filtro = document.getElementById("filtro");
 const fecha = document.getElementById("fecha");
 
 const aviso = document.getElementById("aviso");
+
+const resumen = document.getElementById("resumen");
+
+const cantidadVisible = document.getElementById("cantidad-visible");
+const sinCoincidencias = document.getElementById("sin-coincidencias");
+const botonMasivo = document.getElementById("marcar-todos");
+const menuMasivo = document.getElementById("menu-masivo");
+const modalMasivo = document.getElementById("confirmacion-masiva");
+const cancelarMasiva = document.getElementById("cancelar-masiva");
+const confirmarMasiva = document.getElementById("confirmar-masiva");
+const notificacion = document.getElementById("notificacion");
+
+let estadoPendiente = null;
+let temporizadorNotificacion;
+let ultimoClicConfirmado = null;
+
+
+// ================================
+// PREPARAR FILTRO Y RESUMEN
+// ================================
+
+function prepararEstados() {
+
+    estadosAsistencia.forEach(estado => {
+
+        const opcion = document.createElement("option");
+        opcion.value = estado.valor;
+        opcion.textContent = estado.texto;
+        filtro.appendChild(opcion);
+
+        const tarjeta = document.createElement("div");
+        tarjeta.className = "tarjeta";
+
+        const etiqueta = document.createElement("span");
+        etiqueta.textContent = estado.texto;
+
+        const cantidad = document.createElement("strong");
+        cantidad.id = "resumen-" + estado.valor;
+        cantidad.textContent = "0";
+
+        tarjeta.appendChild(etiqueta);
+        tarjeta.appendChild(cantidad);
+        resumen.appendChild(tarjeta);
+
+        if (estado.oficial) {
+            const accion = document.createElement("button");
+            accion.type = "button";
+            accion.textContent = estado.texto;
+            accion.setAttribute("role", "menuitem");
+            accion.tabIndex = -1;
+            accion.onclick = function () {
+                abrirConfirmacion(estado);
+            };
+            menuMasivo.appendChild(accion);
+        }
+
+    });
+
+}
 
 
 // ================================
@@ -272,6 +355,7 @@ function mostrarEstudiantes() {
     const textoBusqueda = busqueda.value.toLowerCase();
 
     const estadoFiltro = filtro.value;
+    let visibles = 0;
 
 
     estudiantes.forEach((estudiante, indice) => {
@@ -297,16 +381,19 @@ function mostrarEstudiantes() {
             return;
         }
 
+        visibles++;
 
         // Crear fila
 
         const fila = document.createElement("tr");
+        fila.dataset.estado = estudiante.estado;
 
 
         // Número
 
         const numero = document.createElement("td");
 
+        numero.className = "numero-estudiante";
         numero.textContent = indice + 1;
 
 
@@ -314,78 +401,57 @@ function mostrarEstudiantes() {
 
         const nombre = document.createElement("td");
 
+        nombre.className = "nombre-estudiante";
         nombre.textContent = estudiante.nombre;
-
-
-        // Estado
-
-        const estado = document.createElement("td");
-
-        estado.textContent =
-            obtenerTextoEstado(estudiante.estado);
 
 
         // Acciones
 
         const acciones = document.createElement("td");
+        acciones.className = "columna-acciones";
 
+        const grupoBotones = document.createElement("div");
+        grupoBotones.className = "acciones-asistencia";
+        grupoBotones.setAttribute("role", "group");
+        grupoBotones.setAttribute("aria-label", "Asistencia de " + estudiante.nombre);
 
-        // Botón asistió
+        estadosOficiales.forEach(estadoOficial => {
 
-        const botonAsistio =
-            document.createElement("button");
+            const boton = document.createElement("button");
+            const seleccionado = estudiante.estado === estadoOficial.valor;
 
-        botonAsistio.textContent = "Asistió";
+            boton.type = "button";
+            boton.textContent = estadoOficial.textoBoton || estadoOficial.texto;
+            boton.title = (estadoOficial.descripcion || estadoOficial.texto) +
+                " Pulsa de nuevo para volver a Sin registrar.";
+            boton.className = "boton-estado";
+            boton.dataset.estado = estadoOficial.valor;
+            boton.dataset.estudiante = indice;
+            boton.classList.toggle("seleccionado", seleccionado);
+            boton.setAttribute("aria-label", estadoOficial.texto);
+            boton.setAttribute("aria-pressed", seleccionado ? "true" : "false");
 
-        botonAsistio.onclick = function () {
+            boton.onclick = function () {
+                cambiarEstado(indice, estadoOficial.valor);
 
-            cambiarEstado(indice, "asistio");
+                // La tabla se reconstruye: conservamos el foco para usar el teclado.
+                const botonActual = lista.querySelector(
+                    `[data-estudiante="${indice}"][data-estado="${estadoOficial.valor}"]`
+                );
+                (botonActual || filtro).focus({ preventScroll: true });
+            };
 
-        };
+            grupoBotones.appendChild(boton);
 
+        });
 
-        // Botón faltó
-
-        const botonFalto =
-            document.createElement("button");
-
-        botonFalto.textContent = "Faltó";
-
-        botonFalto.onclick = function () {
-
-            cambiarEstado(indice, "falto");
-
-        };
-
-
-        // Botón excusa
-
-        const botonExcusa =
-            document.createElement("button");
-
-        botonExcusa.textContent = "Excusa";
-
-        botonExcusa.onclick = function () {
-
-            cambiarEstado(indice, "excusa");
-
-        };
-
-
-
-        acciones.appendChild(botonAsistio);
-
-        acciones.appendChild(botonFalto);
-
-        acciones.appendChild(botonExcusa);
+        acciones.appendChild(grupoBotones);
 
 
 
         fila.appendChild(numero);
 
         fila.appendChild(nombre);
-
-        fila.appendChild(estado);
 
         fila.appendChild(acciones);
 
@@ -394,6 +460,9 @@ function mostrarEstudiantes() {
 
     });
 
+
+    cantidadVisible.textContent = `Mostrando ${visibles} de ${estudiantes.length}`;
+    sinCoincidencias.hidden = visibles !== 0;
 
     actualizarResumen();
 
@@ -406,7 +475,12 @@ function mostrarEstudiantes() {
 
 function cambiarEstado(indice, nuevoEstado) {
 
-    estudiantes[indice].estado = nuevoEstado;
+    const estudiante = estudiantes[indice];
+
+    // Pulsar otra vez el mismo estado deshace la marcación.
+    estudiante.estado = estudiante.estado === nuevoEstado
+        ? "sin-registrar"
+        : nuevoEstado;
 
     mostrarEstudiantes();
 
@@ -414,25 +488,111 @@ function cambiarEstado(indice, nuevoEstado) {
 
 
 // ================================
-// TEXTO DEL ESTADO
+// MENÚ DE ACCIONES MASIVAS
 // ================================
 
-function obtenerTextoEstado(estado) {
+function abrirMenu(ultimaOpcion = false) {
 
-    if (estado === "asistio") {
-        return "•";
+    menuMasivo.hidden = false;
+    botonMasivo.setAttribute("aria-expanded", "true");
+    const opcion = ultimaOpcion ? menuMasivo.lastElementChild : menuMasivo.firstElementChild;
+    opcion.focus();
+
+}
+
+function cerrarMenu(devolverFoco = true) {
+
+    menuMasivo.hidden = true;
+    botonMasivo.setAttribute("aria-expanded", "false");
+    if (devolverFoco) {
+        botonMasivo.focus({ preventScroll: true });
     }
 
-    if (estado === "falto") {
-        return "✕";
+}
+
+
+// ================================
+// CONFIRMAR Y APLICAR A TODO EL GRUPO
+// ================================
+
+function abrirConfirmacion(estado) {
+
+    if (modalMasivo.open) {
+        return;
     }
 
-    if (estado === "excusa") {
-        return "E";
+    cerrarMenu(false);
+    estadoPendiente = estado;
+    document.getElementById("titulo-confirmacion").textContent =
+        `Marcar todos como “${estado.texto}”`;
+    document.getElementById("mensaje-confirmacion").textContent =
+        `Esta acción asignará el estado “${estado.texto}” a los ${estudiantes.length} estudiantes del grupo ` +
+        "y reemplazará cualquier marcación anterior, incluso la de estudiantes ocultos por la búsqueda o el filtro.";
+
+    confirmarMasiva.disabled = false;
+    // showModal bloquea el fondo y presenta un diálogo propio de la página.
+    modalMasivo.showModal();
+    cancelarMasiva.focus();
+
+}
+
+function cerrarConfirmacion() {
+
+    estadoPendiente = null;
+    confirmarMasiva.disabled = true;
+    modalMasivo.close();
+    botonMasivo.focus({ preventScroll: true });
+
+}
+
+function aplicarEstadoMasivo(evento) {
+
+    if (!modalMasivo.open || estadoPendiente === null) {
+        return;
     }
 
+    const estado = estadoPendiente;
+    // Consumimos la elección antes de modificar datos para impedir ejecuciones dobles.
+    estadoPendiente = null;
+    confirmarMasiva.disabled = true;
 
-    return "Sin registrar";
+    if (evento && evento.detail > 0) {
+        ultimoClicConfirmado = {
+            x: evento.clientX,
+            y: evento.clientY,
+            momento: evento.timeStamp
+        };
+    }
+
+    // Asignamos a la lista completa; la acción individual sí alterna el estado.
+    estudiantes.forEach(estudiante => {
+        estudiante.estado = estado.valor;
+    });
+
+    mostrarEstudiantes();
+    cerrarConfirmacion();
+    mostrarNotificacion(`${estudiantes.length} estudiantes actualizados. Estado: “${estado.texto}”.`);
+
+}
+
+function mostrarNotificacion(mensaje) {
+
+    clearTimeout(temporizadorNotificacion);
+    notificacion.textContent = mensaje;
+    temporizadorNotificacion = setTimeout(function () {
+        notificacion.textContent = "";
+    }, 4500);
+
+}
+
+
+// ================================
+// CONTAR ESTUDIANTES POR ESTADO
+// ================================
+
+function contarEstudiantesPorEstado(valor) {
+
+    return estudiantes.filter(estudiante => estudiante.estado === valor).length;
 
 }
 
@@ -443,47 +603,17 @@ function obtenerTextoEstado(estado) {
 
 function actualizarResumen() {
 
-    const total = estudiantes.length;
+    document.getElementById("total").textContent = estudiantes.length;
 
+    // El resumen siempre cuenta la lista completa, aunque haya filtros activos.
+    estadosAsistencia.forEach(estado => {
 
-    const asistieron =
-        estudiantes.filter(
-            estudiante => estudiante.estado === "asistio"
-        ).length;
+        document.getElementById("resumen-" + estado.valor).textContent =
+            contarEstudiantesPorEstado(estado.valor);
 
+    });
 
-    const faltaron =
-        estudiantes.filter(
-            estudiante => estudiante.estado === "falto"
-        ).length;
-
-
-    const excusas =
-        estudiantes.filter(
-            estudiante => estudiante.estado === "excusa"
-        ).length;
-
-
-    const sinRegistrar =
-        estudiantes.filter(
-            estudiante => estudiante.estado === "sin-registrar"
-        ).length;
-
-
-    document.getElementById("total").textContent =
-        total;
-
-    document.getElementById("asistieron").textContent =
-        asistieron;
-
-    document.getElementById("faltaron").textContent =
-        faltaron;
-
-    document.getElementById("excusas").textContent =
-        excusas;
-
-    document.getElementById("sinRegistrar").textContent =
-        sinRegistrar;
+    const sinRegistrar = contarEstudiantesPorEstado("sin-registrar");
 
 
     // Mostrar u ocultar aviso
@@ -525,6 +655,116 @@ filtro.addEventListener(
 
 
 // ================================
+// ACCIÓN MASIVA
+// ================================
+
+botonMasivo.addEventListener("click", function () {
+    if (menuMasivo.hidden) {
+        abrirMenu();
+    } else {
+        cerrarMenu();
+    }
+});
+
+botonMasivo.addEventListener("keydown", function (evento) {
+    if (evento.key === "ArrowDown" || evento.key === "ArrowUp") {
+        evento.preventDefault();
+        abrirMenu(evento.key === "ArrowUp");
+    }
+});
+
+menuMasivo.addEventListener("keydown", function (evento) {
+    if (evento.key === "Tab") {
+        // Tab continúa desde el botón principal hacia los controles de la página.
+        cerrarMenu();
+        return;
+    }
+
+    const opciones = Array.from(menuMasivo.children);
+    let posicion = opciones.indexOf(document.activeElement);
+
+    if (evento.key === "ArrowDown") {
+        posicion = (posicion + 1) % opciones.length;
+    } else if (evento.key === "ArrowUp") {
+        posicion = (posicion - 1 + opciones.length) % opciones.length;
+    } else if (evento.key === "Home") {
+        posicion = 0;
+    } else if (evento.key === "End") {
+        posicion = opciones.length - 1;
+    } else {
+        return;
+    }
+
+    evento.preventDefault();
+    opciones[posicion].focus();
+});
+
+document.addEventListener("click", function (evento) {
+    if (!menuMasivo.hidden && !botonMasivo.parentElement.contains(evento.target)) {
+        cerrarMenu(false);
+    }
+});
+
+document.addEventListener("keydown", function (evento) {
+    if (evento.key === "Escape" && !menuMasivo.hidden) {
+        evento.preventDefault();
+        cerrarMenu();
+    }
+});
+
+cancelarMasiva.addEventListener("click", cerrarConfirmacion);
+confirmarMasiva.addEventListener("click", aplicarEstadoMasivo);
+
+// Tras cerrar el modal, el segundo clic de un doble clic puede caer en la tabla.
+// Interceptamos solo pulsaciones inmediatas en la misma posición, sin demorar el cierre.
+document.addEventListener("click", function (evento) {
+    if (ultimoClicConfirmado === null) {
+        return;
+    }
+
+    const mismaPosicion = Math.abs(evento.clientX - ultimoClicConfirmado.x) <= 6 &&
+        Math.abs(evento.clientY - ultimoClicConfirmado.y) <= 6;
+    const inmediato = evento.timeStamp - ultimoClicConfirmado.momento <= 500;
+
+    if (evento.detail > 0 && mismaPosicion && inmediato) {
+        evento.preventDefault();
+        evento.stopImmediatePropagation();
+        botonMasivo.focus({ preventScroll: true });
+    } else {
+        ultimoClicConfirmado = null;
+    }
+}, true);
+
+modalMasivo.addEventListener("cancel", function (evento) {
+    evento.preventDefault();
+    cerrarConfirmacion();
+});
+
+modalMasivo.addEventListener("click", function (evento) {
+    const limites = modalMasivo.getBoundingClientRect();
+    const fuera = evento.clientX < limites.left || evento.clientX > limites.right ||
+        evento.clientY < limites.top || evento.clientY > limites.bottom;
+    if (evento.target === modalMasivo && fuera) {
+        cerrarConfirmacion();
+    }
+});
+
+modalMasivo.addEventListener("keydown", function (evento) {
+    if (evento.key !== "Tab") {
+        return;
+    }
+
+    if (evento.shiftKey && document.activeElement === cancelarMasiva) {
+        evento.preventDefault();
+        confirmarMasiva.focus();
+    } else if (!evento.shiftKey && document.activeElement === confirmarMasiva) {
+        evento.preventDefault();
+        cancelarMasiva.focus();
+    }
+});
+
+
+// ================================
 // GUARDAR
 // ================================
 
@@ -532,11 +772,7 @@ document
     .getElementById("guardar")
     .addEventListener("click", function () {
 
-        const sinRegistrar =
-            estudiantes.filter(
-                estudiante =>
-                    estudiante.estado === "sin-registrar"
-            ).length;
+        const sinRegistrar = contarEstudiantesPorEstado("sin-registrar");
 
 
         if (sinRegistrar > 0) {
@@ -560,6 +796,8 @@ document
 // ================================
 // INICIAR
 // ================================
+
+prepararEstados();
 
 mostrarEstudiantes();
 
