@@ -1,0 +1,30 @@
+# Datos locales del servidor (se crean al iniciar).
+/server/data/
+
+# Bases SQLite y sus archivos auxiliares, en cualquier carpeta.
+*.sqlite
+*.sqlite3
+*.db
+*.sqlite-*
+*.sqlite3-*
+*.db-*
+
+# Dependencias y configuración local.
+node_modules/
+.env
+.env.*
+!.env.example
+
+# Registros y archivos temporales.
+logs/
+*.log
+tmp/
+temp/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Fichas generadas o de pruebas: no contienen código fuente.
+*.xlsx

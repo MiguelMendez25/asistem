@@ -16,36 +16,59 @@
 
         <h1>Asistem</h1>
 
-        <div class="informacion-clase">
-
-            <div>
-                <strong>Docente</strong>
-                <p>Nombre del docente</p>
-            </div>
-
-            <div>
-                <strong>Curso</strong>
-
-                <select id="curso">
-                    <option>11°1</option>
-                    <option>11°2</option>
-                    <option selected>11°3</option>
-                    <option>11°4</option>
-                    <option>11°5</option>
-                </select>
-            </div>
-
-            <div>
-                <strong>Fecha</strong>
-                <p id="fecha"></p>
-            </div>
-
+        <div id="contexto-asistencia" class="informacion-clase" hidden>
+            <div><strong>Curso</strong><p>11°3</p></div>
+            <div><strong>Semana (lunes–viernes)</strong><p id="semana-activa"></p></div>
+            <div><strong>Fecha</strong><p id="fecha"></p></div>
+            <div><strong>Hora</strong><p id="hora-activa"></p></div>
+            <button id="volver-portada" type="button">Volver a la portada</button>
         </div>
 
     </header>
 
 
     <main>
+        <p id="estado-borrador" class="borrador" role="status" aria-live="polite"></p>
+        <section class="controles-excel" aria-label="Ficha semanal y Excel">
+            <strong id="contexto-excel"></strong>
+            <div class="botones-excel">
+                <button id="abrir-excel" type="button">Abrir ficha Excel</button>
+                <input id="archivo-excel" type="file" accept=".xlsx" hidden>
+                <button id="ver-semanal" type="button">Ver ficha semanal</button>
+                <button id="descargar-excel" type="button">Descargar ficha Excel</button>
+            </div>
+            <p id="pendiente-excel"></p>
+            <p id="mensaje-excel" role="status" aria-live="polite"></p>
+        </section>
+        <section id="vista-semanal" hidden>
+            <h2 id="titulo-semanal" tabindex="-1"></h2>
+            <p>Selecciona una hora en el encabezado para corregirla con los botones de asistencia.</p>
+            <button id="volver-semanal-portada" type="button">Volver a la portada</button>
+            <p id="leyenda-semanal"></p>
+            <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Ficha semanal con desplazamiento horizontal">
+                <table id="tabla-semanal"></table>
+            </div>
+        </section>
+        <section id="portada">
+            <h2>Abrir una asistencia</h2>
+            <p>Elige la semana, un día lectivo y la hora que vas a registrar.</p>
+            <form id="seleccion-asistencia">
+                <div class="seleccion-local">
+                    <label>Curso<select id="curso"><option value="curso-11-3">11°3</option></select></label>
+                    <label>Fecha de referencia<input id="referencia" type="date" required></label>
+                </div>
+                <p id="intervalo"></p>
+                <p id="aviso-fecha" role="status"></p>
+                <div class="seleccion-local">
+                    <label>Día lectivo<select id="dia" required></select></label>
+                    <label>Hora<select id="hora"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option></select></label>
+                    <button id="abrir-asistencia" type="submit">Abrir asistencia</button>
+                </div>
+            </form>
+            <label class="fichas-locales">Fichas del espacio de trabajo<select id="fichas"></select></label>
+            <p class="nota-local">El borrador depende de este navegador y de la ubicación del archivo. Al abrir mediante file://, su conservación no está garantizada. No sustituye la descarga de una ficha Excel transportable.</p>
+        </section>
+        <div id="asistencia" hidden>
 
         <!-- RESUMEN -->
 
@@ -142,11 +165,12 @@
         <section class="guardar">
 
             <button id="guardar">
-                ✓ Guardar asistencia
+                Guardar borrador
             </button>
 
         </section>
 
+        </div>
     </main>
 
     <dialog id="confirmacion-masiva" aria-labelledby="titulo-confirmacion"
@@ -162,9 +186,26 @@
         </div>
     </dialog>
 
+    <dialog id="modal-importacion" aria-labelledby="titulo-importacion" aria-describedby="resumen-importacion advertencia-importacion">
+        <div class="contenido-modal">
+            <h2 id="titulo-importacion">Abrir ficha Excel</h2>
+            <p id="resumen-importacion"></p>
+            <p id="advertencia-importacion"></p>
+            <div class="botones-modal">
+                <button id="cancelar-importacion" type="button" autofocus>Cancelar</button>
+                <button id="confirmar-importacion" type="button" disabled>Incorporar ficha</button>
+            </div>
+        </div>
+    </dialog>
     <div id="notificacion" class="notificacion" role="status" aria-live="polite" aria-atomic="true"></div>
 
 
+    <script src="vendor/xlsx.full.min.js"></script>
+    <script src="vendor/exceljs.min.js"></script>
+    <script src="modelo.js"></script>
+    <script src="inicio.js"></script>
+    <script src="excel.js"></script>
+    <script src="semanal.js"></script>
     <script src="script.js"></script>
 
 </body>

@@ -369,7 +369,7 @@ button:focus-visible,
    CONFIRMACIÓN Y NOTIFICACIÓN
 ================================ */
 
-#confirmacion-masiva {
+#confirmacion-masiva, #modal-importacion {
     width: min(460px, calc(100% - 32px));
     max-height: calc(100% - 32px);
     margin: auto;
@@ -381,7 +381,7 @@ button:focus-visible,
     font: inherit;
 }
 
-#confirmacion-masiva::backdrop {
+#confirmacion-masiva::backdrop, #modal-importacion::backdrop {
     background: #18263580;
 }
 
@@ -455,3 +455,36 @@ button:focus-visible,
     font-weight: bold;
 }
 
+
+/* Navegación local: conserva la tabla y las acciones compactas. */
+[hidden] { display: none !important; }
+.informacion-clase { flex-wrap: wrap; gap: 12px 24px; }
+#portada { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 20px; }
+#portada h2 { margin-top: 0; }
+.seleccion-local { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+#portada label { display: flex; flex-direction: column; gap: 6px; }
+#portada input, #portada select { min-height: 44px; padding: 8px; font: inherit; border: 1px solid #ccc; border-radius: 5px; max-width: 100%; }
+#portada button, #volver-portada { min-height: 44px; }
+#portada input:focus-visible, #portada select:focus-visible { outline: 3px solid #243b53; outline-offset: 2px; }
+#abrir-asistencia { background: #243b53; color: white; }
+#abrir-asistencia:disabled { opacity: .55; cursor: default; }
+.fichas-locales { margin-top: 24px; max-width: 480px; }
+.nota-local { color: #555; font-size: 14px; line-height: 1.5; }
+.borrador { padding: 10px 12px; border: 1px solid; border-radius: 6px; font-size: 14px; }
+.borrador.actualizado { background: #eef6ef; border-color: #accbb2; color: #245334; }
+.borrador.memoria { background: #fff3cd; border-color: #d4ac39; color: #594300; }
+
+/* Consulta semanal y transporte de fichas, separados del borrador. */
+.controles-excel { padding: 12px; border: 1px solid #d6dce2; border-radius: 6px; background: white; }
+.botones-excel { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.botones-excel button { min-height: 44px; margin: 0; }
+.controles-excel p { margin: 8px 0 0; font-size: 14px; }
+#pendiente-excel { color: #594300; }
+#mensaje-excel:empty { display: none; }
+#tabla-semanal { width: max-content; min-width: 100%; }
+#tabla-semanal td, #tabla-semanal th { text-align: center; min-width: 44px; border-right: 1px solid #ddd; }
+#tabla-semanal .nombre-semanal { position: sticky; left: 0; z-index: 1; min-width: 260px; max-width: 330px; text-align: left; background: white; font-weight: normal; }
+#tabla-semanal thead .nombre-semanal { background: #f0f2f4; }
+#tabla-semanal button { min-height: 44px; margin: 0; }
+#leyenda-semanal { font-size: 14px; line-height: 1.5; }
+.tabla-contenedor:focus-visible, #titulo-semanal:focus-visible { outline: 3px solid #243b53; outline-offset: 2px; }

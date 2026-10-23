@@ -1,0 +1,12 @@
+{
+  "name": "asistem",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Infraestructura local del servidor de Asistem",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}
