@@ -488,3 +488,11 @@ button:focus-visible,
 #tabla-semanal button { min-height: 44px; margin: 0; }
 #leyenda-semanal { font-size: 14px; line-height: 1.5; }
 .tabla-contenedor:focus-visible, #titulo-semanal:focus-visible { outline: 3px solid #243b53; outline-offset: 2px; }
+
+.campo-asignatura { display: flex; flex-direction: column; gap: 6px; }
+#asignatura { min-height: 44px; max-width: 100%; padding: 8px; font: inherit; border: 1px solid #ccc; border-radius: 5px; background: white; }
+#asignatura:focus-visible, .leyenda-asignaturas summary:focus-visible { outline: 3px solid #243b53; outline-offset: 2px; }
+#tabla-semanal thead button { display: flex; flex-direction: column; align-items: center; gap: 3px; width: 100%; min-width: 28px; padding: 6px 2px; }
+.asignatura-semanal { font-size: 11px; font-weight: bold; white-space: nowrap; }
+.leyenda-asignaturas { margin-bottom: 12px; font-size: 14px; line-height: 1.5; }
+.leyenda-asignaturas summary { cursor: pointer; }

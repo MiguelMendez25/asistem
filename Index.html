@@ -21,6 +21,10 @@
             <div><strong>Semana (lunes–viernes)</strong><p id="semana-activa"></p></div>
             <div><strong>Fecha</strong><p id="fecha"></p></div>
             <div><strong>Hora</strong><p id="hora-activa"></p></div>
+            <label class="campo-asignatura" for="asignatura">
+                <strong>Asignatura</strong>
+                <select id="asignatura"><option value="">Sin asignar</option></select>
+            </label>
             <button id="volver-portada" type="button">Volver a la portada</button>
         </div>
 
@@ -42,9 +46,14 @@
         </section>
         <section id="vista-semanal" hidden>
             <h2 id="titulo-semanal" tabindex="-1"></h2>
-            <p>Selecciona una hora en el encabezado para corregirla con los botones de asistencia.</p>
+            <p>Selecciona una hora en el encabezado para modificar su asignatura o registrar asistencia.</p>
             <button id="volver-semanal-portada" type="button">Volver a la portada</button>
             <p id="leyenda-semanal"></p>
+            <details class="leyenda-asignaturas">
+                <summary>Abreviaciones de asignaturas</summary>
+                <p id="leyenda-asignaturas"></p>
+                <p>— indica Sin asignar. Cada materia corresponde únicamente al día y hora elegidos.</p>
+            </details>
             <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Ficha semanal con desplazamiento horizontal">
                 <table id="tabla-semanal"></table>
             </div>

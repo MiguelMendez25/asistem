@@ -1,7 +1,7 @@
-// Plantillas v1/v2: mismas coordenadas; la versión distingue la codificación, no el modelo.
+// v1/v2: estudiantes desde fila 8. v3: asignaturas en fila 8, estudiantes desde fila 9.
 // A/B = número/nombre, C:AK = 35 horas, AL = ID estable oculto.
 // Solo las celdas visibles de Asistencia contienen marcaciones.
-const VERSION_PLANTILLA = 2;
+const VERSION_PLANTILLA = 3;
 // A y R son ambiguas: este mapa se usa exclusivamente para archivos declarados v1.
 const CODIGOS_EXCEL_V1 = Object.freeze({
     A: "asistio", CE: "falto-con-excusa", SE: "falto-sin-excusa", R: "reportado", T: "llego-tarde"
@@ -9,8 +9,8 @@ const CODIGOS_EXCEL_V1 = Object.freeze({
 
 function codigosImportacion(version) {
     if (version === 1) return CODIGOS_EXCEL_V1;
-    if (version === 2) return Object.fromEntries(estadosOficiales.map(e => [e.simbolo, e.valor]));
-    throw new Error("_Asistem!B1: versión de archivo ausente o incompatible. Se admiten únicamente las versiones 1 y 2.");
+    if (version === 2 || version === 3) return Object.fromEntries(estadosOficiales.map(e => [e.simbolo, e.valor]));
+    throw new Error("_Asistem!B1: versión de archivo ausente o incompatible. Se admiten únicamente las versiones 1, 2 y 3.");
 }
 const LIMITE_EXCEL = 5 * 1024 * 1024;
 const DIAS_LECTIVOS = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
@@ -46,9 +46,35 @@ function codigoEnFicha(ficha, fecha, hora, id) {
     return estadosOficiales.find(e => e.valor === valor)?.simbolo || "";
 }
 
+function lineasLeyendaAsignaturas() {
+    const lineas = [];
+    for (let i = 0; i < catalogoAsignaturas.length; i += 6) {
+        lineas.push(catalogoAsignaturas.slice(i, i + 6).map(a => `${a.abreviatura} = ${a.nombre}`).join(" | "));
+    }
+    return lineas;
+}
+
+function estructuraExcel(version) {
+    const primeraFilaEstudiantes = version === 3 ? 9 : 8;
+    const ultimaFilaEstudiantes = primeraFilaEstudiantes + estudiantes.length - 1;
+    const ultimaFila = ultimaFilaEstudiantes + (version === 3 ? 1 + lineasLeyendaAsignaturas().length : 0);
+    return { primeraFilaEstudiantes, ultimaFilaEstudiantes, ultimaFila };
+}
+
+function interpretarAsignaturaExcel(valor, celda) {
+    if (typeof valor !== "string") throw new Error(`Asistencia!${celda}: se esperaba una asignatura, su abreviación o una celda vacía.`);
+    const normalizar = texto => texto.trim().replace(/\s+/g, " ").toLocaleUpperCase("es");
+    const texto = normalizar(valor);
+    if (!texto) return null;
+    const asignatura = catalogoAsignaturas.find(a => normalizar(a.abreviatura) === texto || normalizar(a.nombre) === texto);
+    if (!asignatura) throw new Error(`Asistencia!${celda}: asignatura desconocida. Usa un nombre o abreviación de la leyenda, o deja la celda vacía.`);
+    return asignatura;
+}
+
 function crearLibroExcel(ficha) {
     validarBorrador({ versionFormato: VERSION_FORMATO, fichas: [ficha] });
     const posiciones = posicionesSemana(ficha.lunes);
+    const { primeraFilaEstudiantes, ultimaFilaEstudiantes, ultimaFila } = estructuraExcel(VERSION_PLANTILLA);
     const filas = [
         [encabezadoInstitucional(ficha.lunes)],
         ["GRADO", ficha.curso.nombre],
@@ -56,17 +82,19 @@ function crearLibroExcel(ficha) {
         [leyendaExcel()],
         ["", "", ...posiciones.map(p => p.hora === 1 ? DIAS_LECTIVOS[p.dia].toUpperCase() : "")],
         ["", "", ...posiciones.map(p => p.fecha)],
-        ["#", "Estudiante", ...posiciones.map(p => p.hora), "ID estudiante"]
+        ["#", "Estudiante", ...posiciones.map(p => p.hora), "ID estudiante"],
+        ["", "ASIGNATURA", ...posiciones.map(p => asignaturaEnFicha(ficha, p.fecha, p.hora)?.abreviatura || "")]
     ];
     estudiantes.forEach(e => filas.push([e.numero, e.nombre,
         ...posiciones.map(p => codigoEnFicha(ficha, p.fecha, p.hora, e.id)), e.id]));
+    filas.push(["ASIGNATURAS · Celda vacía = Sin asignar"], ...lineasLeyendaAsignaturas().map(linea => [linea]));
     const libro = new ExcelJS.Workbook();
     const hoja = libro.addWorksheet("Asistencia", {
         views: [{ showGridLines: false }],
         pageSetup: {
             paperSize: PAPEL_EXCEL, orientation: "landscape", horizontalCentered: true,
             fitToPage: true, fitToWidth: 1, fitToHeight: 0,
-            printArea: `A1:AK${7 + estudiantes.length}`, printTitlesRow: "1:7",
+            printArea: `A1:AK${ultimaFila}`, printTitlesRow: "1:8",
             showGridLines: false,
             margins: { left: 0.2, right: 0.2, top: 0.25, bottom: 0.25, header: 0.1, footer: 0.1 }
         }
@@ -91,22 +119,22 @@ function crearLibroExcel(ficha) {
         hoja.mergeCells(5, 3 + dia * 7, 5, 9 + dia * 7);
     }
     const borde = estilo => ({ style: estilo, color: { argb: "FF000000" } });
-    for (let r = 1; r <= 7 + estudiantes.length; r++) {
+    for (let r = 1; r <= ultimaFilaEstudiantes; r++) {
         const fila = hoja.getRow(r);
-        fila.height = r >= 8 && estudiantes[r - 8].nombre.length > 38 ? 26 : 14;
+        fila.height = r >= primeraFilaEstudiantes && estudiantes[r - primeraFilaEstudiantes].nombre.length > 38 ? 26 : 14;
         for (let c = 1; c <= 37; c++) {
             const celda = fila.getCell(c);
             // Las combinadas se formatean en su celda principal; las 35 casillas no se combinan.
             if (celda.isMerged && celda.master.address !== celda.address) continue;
-            celda.font = { name: "Arial", size: 10, color: { argb: "FF000000" }, bold: r <= 7 && r !== 4 };
+            celda.font = { name: "Arial", size: 10, color: { argb: "FF000000" }, bold: r < primeraFilaEstudiantes && r !== 4 };
             celda.alignment = { horizontal: c === 2 && r >= 8 ? "left" : "center", vertical: "middle", wrapText: true };
             celda.border = {
-                top: borde(r === 1 || r === 5 || r === 8 ? "medium" : "thin"),
-                bottom: borde(r === 7 + estudiantes.length ? "medium" : "thin"),
+                top: borde(r === 1 || r === 5 || r === primeraFilaEstudiantes ? "medium" : "thin"),
+                bottom: borde(r === ultimaFilaEstudiantes ? "medium" : "thin"),
                 left: borde(c === 1 || (c >= 3 && (c - 3) % 7 === 0) ? "medium" : "thin"),
                 right: borde(c === 37 || (c >= 3 && (c - 2) % 7 === 0) ? "medium" : "thin")
             };
-            if (r <= 7) celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: r === 1 ? "FFD9D9D9" : "FFF2F2F2" } };
+            if (r < primeraFilaEstudiantes) celda.fill = { type: "pattern", pattern: "solid", fgColor: { argb: r === 1 ? "FFD9D9D9" : "FFF2F2F2" } };
         }
     }
     hoja.getRow(1).height = 38;
@@ -117,6 +145,21 @@ function crearLibroExcel(ficha) {
     hoja.getCell("A4").font = { name: "Arial", size: 9 };
     hoja.getRow(5).height = 18;
     hoja.getRow(7).height = 16;
+    hoja.getRow(8).height = 30;
+    for (let c = 3; c <= 37; c++) {
+        const celda = hoja.getRow(8).getCell(c);
+        // Rótulos breves verticales: conservan el ancho horario y el tamaño legible de fuente.
+        celda.alignment = { horizontal: "center", vertical: "middle", textRotation: 90 };
+        celda.font = { name: "Arial", size: 9, bold: true, color: { argb: "FF000000" } };
+    }
+    for (let r = ultimaFilaEstudiantes + 1; r <= ultimaFila; r++) {
+        hoja.mergeCells(r, 1, r, 37);
+        hoja.getRow(r).height = 25;
+        const celda = hoja.getCell(r, 1);
+        celda.font = { name: "Arial", size: 9, bold: r === ultimaFilaEstudiantes + 1, color: { argb: "FF000000" } };
+        celda.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+        celda.border = { top: borde("thin"), bottom: borde("thin"), left: borde("medium"), right: borde("medium") };
+    }
     // Contorno de las bandas combinadas, sin añadir bordes dentro de los títulos.
     for (const direccion of ["A1", "A4", "X2", "C5", "J5", "Q5", "X5", "AE5"]) {
         const celda = hoja.getCell(direccion);
@@ -153,10 +196,11 @@ function validarLibroExcel(libro) {
             return celda?.v ?? "";
         };
     }
-    const principal = hojaLimitada("Asistencia", 7 + estudiantes.length, 38);
     const meta = hojaLimitada("_Asistem", 4, 2);
     const versionArchivo = meta("B1");
     const codigos = codigosImportacion(versionArchivo);
+    const { primeraFilaEstudiantes, ultimaFilaEstudiantes, ultimaFila } = estructuraExcel(versionArchivo);
+    const principal = hojaLimitada("Asistencia", ultimaFila, 38);
     const igual = (leer, celda, esperado, hoja) => {
         if (leer(celda) !== esperado) throw new Error(`${hoja}!${celda}: valor incompatible con la plantilla Asistem.`);
     };
@@ -184,9 +228,20 @@ function validarLibroExcel(libro) {
         }
     });
     const ficha = { versionFormato: VERSION_FORMATO, curso: { ...cursoActual }, lunes,
-        estudiantes: estudiantes.map(({ id, nombre }) => ({ id, nombre })), marcaciones: {}, revision: 0, revisionExcel: 0 };
+        estudiantes: estudiantes.map(({ id, nombre }) => ({ id, nombre })), marcaciones: {}, asignaturas: {}, revision: 0, revisionExcel: 0 };
+    if (versionArchivo === 3) {
+        igual(principal, "B8", "ASIGNATURA", "Asistencia");
+        posiciones.forEach((p, i) => {
+            const celda = XLSX.utils.encode_col(i + 2) + "8";
+            const asignatura = interpretarAsignaturaExcel(principal(celda), celda);
+            if (asignatura) {
+                ficha.asignaturas[p.fecha] ??= {};
+                ficha.asignaturas[p.fecha][p.hora] = asignatura.id;
+            }
+        });
+    }
     const vistos = new Set();
-    for (let fila = 8; fila < 8 + estudiantes.length; fila++) {
+    for (let fila = primeraFilaEstudiantes; fila <= ultimaFilaEstudiantes; fila++) {
         const id = principal("AL" + fila);
         const estudiante = estudiantes.find(e => e.id === id);
         if (!estudiante || vistos.has(id)) throw new Error(`Asistencia!AL${fila}: identificador desconocido o duplicado.`);
@@ -199,7 +254,7 @@ function validarLibroExcel(libro) {
             if (typeof valor !== "string") throw new Error(`Asistencia!${celda}: se esperaba un código de asistencia o una celda vacía.`);
             let codigo = valor.trim().toUpperCase();
             if (!codigo) return;
-            if (versionArchivo === 2 && (codigo === "·" || codigo === "•")) codigo = ".";
+            if (versionArchivo !== 1 && (codigo === "·" || codigo === "•")) codigo = ".";
             if (!Object.hasOwn(codigos, codigo)) {
                 throw new Error(`Asistencia!${celda}: código no permitido en la versión ${versionArchivo}. Usa ${Object.keys(codigos).join(", ")} o una celda vacía.`);
             }

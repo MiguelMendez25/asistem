@@ -262,6 +262,54 @@ const estadosAsistencia = [
 
 const estadosOficiales = estadosAsistencia.filter(estado => estado.oficial);
 
+// Catálogo único para el selector, la vista semanal y las celdas editables del Excel.
+const catalogoAsignaturas = [
+    { id: "ciencias-politicas", nombre: "Ciencias Políticas", abreviatura: "POL" },
+    { id: "sociales", nombre: "Sociales", abreviatura: "SOC" },
+    { id: "pensamiento-variacional", nombre: "Pensamiento variacional", abreviatura: "PV" },
+    { id: "literatura", nombre: "Literatura", abreviatura: "LIT" },
+    { id: "ingles", nombre: "Inglés", abreviatura: "ING" },
+    { id: "quimica", nombre: "Química", abreviatura: "QUI" },
+    { id: "produccion-textual", nombre: "Producción textual", abreviatura: "PT" },
+    { id: "educacion-religiosa", nombre: "Educación Religiosa", abreviatura: "ER" },
+    { id: "biologia", nombre: "Biología", abreviatura: "BIO" },
+    { id: "tecnologia", nombre: "Tecnología", abreviatura: "TEC" },
+    { id: "educacion-etica", nombre: "Educación Ética", abreviatura: "EE" },
+    { id: "geometria-estadistica", nombre: "Geometría y Estadística", abreviatura: "GE" },
+    { id: "educacion-fisica", nombre: "Educación Física", abreviatura: "EF" },
+    { id: "danza", nombre: "Danza", abreviatura: "DAN" },
+    { id: "fisica", nombre: "Física", abreviatura: "FIS" },
+    { id: "musica", nombre: "Música", abreviatura: "MUS" },
+    { id: "artes-plasticas", nombre: "Artes Plásticas", abreviatura: "AP" }
+];
+
+function asignaturaEnFicha(ficha, fecha, hora) {
+    const id = ficha.asignaturas?.[fecha]?.[hora];
+    return catalogoAsignaturas.find(asignatura => asignatura.id === id) || null;
+}
+
+function asignarAsignatura(id) {
+    if (!sesionActiva) throw new Error("No hay una sesión activa.");
+    if (id !== "" && !catalogoAsignaturas.some(asignatura => asignatura.id === id)) {
+        throw new Error("Asignatura desconocida.");
+    }
+    const { ficha, fecha, hora } = sesionActiva;
+    if ((asignaturaEnFicha(ficha, fecha, hora)?.id || "") === id) return;
+    if (id === "") {
+        delete ficha.asignaturas[fecha][hora];
+        if (!Object.keys(ficha.asignaturas[fecha]).length) delete ficha.asignaturas[fecha];
+    } else {
+        ficha.asignaturas ??= {};
+        ficha.asignaturas[fecha] ??= {};
+        ficha.asignaturas[fecha][hora] = id;
+    }
+    // Materias y asistencias comparten el aviso de cambios pendientes de llevar a Excel.
+    ficha.revision = (ficha.revision || 0) + 1;
+}
+
+function leyendaAsignaturas() {
+    return catalogoAsignaturas.map(a => `${a.abreviatura} = ${a.nombre}`).join(" | ");
+}
 
 // Fechas civiles: se opera en UTC y se devuelve texto, nunca una fecha local convertida.
 function fechaCivil(texto) {
@@ -312,7 +360,8 @@ function obtenerFicha(lunes) {
             curso: { ...cursoActual },
             lunes,
             estudiantes: estudiantes.map(({ id, nombre }) => ({ id, nombre })),
-            marcaciones: {}
+            marcaciones: {},
+            asignaturas: {}
         };
         espacioTrabajo.fichas.push(ficha);
     }
@@ -363,6 +412,16 @@ function validarBorrador(datos) {
         claves.add(clave);
         exigir(Array.isArray(ficha.estudiantes) && ficha.estudiantes.length === estudiantes.length);
         ficha.estudiantes.forEach((e, i) => exigir(e?.id === estudiantes[i].id && e.nombre === estudiantes[i].nombre));
+        // Campo opcional: un borrador anterior sin asignaturas sigue siendo válido, sin migrar asistencias.
+        if (ficha.asignaturas !== undefined) {
+            exigir(objeto(ficha.asignaturas));
+            for (const [fecha, horas] of Object.entries(ficha.asignaturas)) {
+                exigir(diasDeSemana(ficha.lunes).includes(fecha) && objeto(horas));
+                for (const [hora, id] of Object.entries(horas)) {
+                    exigir(/^[1-7]$/.test(hora) && catalogoAsignaturas.some(a => a.id === id));
+                }
+            }
+        }
         exigir(objeto(ficha.marcaciones));
         for (const [fecha, horas] of Object.entries(ficha.marcaciones)) {
             exigir(diasDeSemana(ficha.lunes).includes(fecha) && objeto(horas));

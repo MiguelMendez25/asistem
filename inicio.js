@@ -81,6 +81,13 @@ function actualizarFichas() {
 }
 
 function iniciarPortada() {
+    const selectorAsignatura = document.getElementById("asignatura");
+    catalogoAsignaturas.forEach(a => selectorAsignatura.add(new Option(a.nombre, a.id)));
+    selectorAsignatura.addEventListener("change", () => {
+        asignarAsignatura(selectorAsignatura.value);
+        guardarBorrador();
+        actualizarAvisoExcel();
+    });
     recuperarBorrador();
     if (!borradorBloqueado) guardarBorrador(); // Comprueba lectura, escritura y recuperación real.
     const hoy = new Date();
@@ -120,6 +127,7 @@ function mostrarSesionActiva() {
     document.getElementById("semana-activa").textContent = sesionActiva.ficha.lunes + " — " + sumarDias(sesionActiva.ficha.lunes, 4);
     fecha.textContent = sesionActiva.fecha;
     document.getElementById("hora-activa").textContent = sesionActiva.hora;
+    document.getElementById("asignatura").value = asignaturaEnFicha(sesionActiva.ficha, sesionActiva.fecha, sesionActiva.hora)?.id || "";
     mostrarEstudiantes();
     guardarBorrador();
     actualizarAvisoExcel();

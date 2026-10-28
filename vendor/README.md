@@ -21,6 +21,10 @@ Versión fija: **4.4.0**, distribución de navegador del paquete oficial `excelj
 
 ExcelJS genera estilos e impresión; SheetJS sigue leyendo y validando las fichas. Ambos scripts se cargan localmente, sin red durante el uso.
 
-La exportación institucional usa la plantilla XLSX v2 (`_Asistem!B1 = 2`), conservando las posiciones de datos y el modelo/borrador v1. Símbolos v2: `.` asistió, `E` con excusa, `X` sin excusa, `A` reportado y `R` tarde. La importación de archivos v1 mantiene exclusivamente la codificación antigua: `A`, `CE`, `SE`, `R`, `T`, respectivamente. No se deduce la versión de las letras ni de la leyenda. Una celda vacía siempre significa sin registrar.
+La exportación institucional usa la plantilla XLSX v3 (`_Asistem!B1 = 3`). La fila 8 contiene 35 asignaturas editables en C8:AK8; los estudiantes pasan a las filas 9–46, con asistencias en C9:AK46 e identificadores en AL. La leyenda de asignaturas se imprime al final. Las abreviaciones y sus nombres completos se obtienen exclusivamente del catálogo de `modelo.js`; ambos se admiten al importar. Las materias vacías significan Sin asignar.
 
-Las filas 3 y 6 son técnicas y están ocultas; las asistencias permanecen en C8:AK45. El papel inicial A4 se centraliza en `PAPEL_EXCEL` de `excel.js`; se ajusta a una página de ancho y se permite más de una de alto para evitar reducir el texto en exceso. Los encabezados se repiten si hay varias páginas.
+La importación conserva v1 y v2 (estudiantes en filas 8–45, sin asignaturas). Símbolos v2/v3: `.` asistió, `E` con excusa, `X` sin excusa, `A` reportado y `R` tarde. En v1 se utiliza exclusivamente `A`, `CE`, `SE`, `R`, `T`, respectivamente. No se deduce la versión de las letras ni de la leyenda. Una celda de asistencia vacía siempre significa Sin registrar.
+
+El modelo/borrador sigue en v1 con un campo opcional `asignaturas[fecha][hora]` que almacena el identificador de la materia. Los borradores anteriores sin ese campo son válidos y se interpretan sin asignaturas; no se cambian sus marcaciones. Toda modificación de materia incrementa la revisión de su semana para el aviso de cambios pendientes de Excel.
+
+Las filas 3 y 6 son técnicas y están ocultas. El papel inicial A4 se centraliza en `PAPEL_EXCEL` de `excel.js`; se ajusta a una página de ancho y se permite más de una de alto para evitar reducir el texto en exceso. Los encabezados, incluida la fila de asignaturas, se repiten si hay varias páginas.

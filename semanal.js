@@ -67,9 +67,17 @@ function mostrarFichaSemanal(lunes) {
             const th = celda(horas, "th", "");
             th.scope = "col";
             const boton = document.createElement("button");
+            const asignatura = asignaturaEnFicha(ficha, fecha, hora);
             boton.type = "button";
-            boton.textContent = hora;
-            boton.setAttribute("aria-label", `Abrir ${fecha}, hora ${hora}`);
+            const numeroHora = document.createElement("span");
+            numeroHora.textContent = hora;
+            const materia = document.createElement("span");
+            materia.className = "asignatura-semanal";
+            materia.textContent = asignatura?.abreviatura || "—";
+            boton.appendChild(numeroHora);
+            boton.appendChild(materia);
+            boton.title = asignatura?.nombre || "Sin asignar";
+            boton.setAttribute("aria-label", `Abrir ${fecha}, hora ${hora}. Asignatura: ${asignatura?.nombre || "Sin asignar"}`);
             boton.onclick = () => entrarAsistencia(fecha, hora);
             th.appendChild(boton);
         }
@@ -91,6 +99,7 @@ function mostrarFichaSemanal(lunes) {
     });
     tabla.appendChild(cuerpo);
     document.getElementById("leyenda-semanal").textContent = leyendaExcel();
+    document.getElementById("leyenda-asignaturas").textContent = leyendaAsignaturas();
     guardarBorrador();
     actualizarAvisoExcel();
     document.getElementById("titulo-semanal").focus();
@@ -147,10 +156,11 @@ function cerrarImportacion(cancelada = true) {
 function prepararImportacion(ficha) {
     const existente = espacioTrabajo.fichas.some(f => f.curso.id === ficha.curso.id && f.lunes === ficha.lunes);
     const cantidad = posicionesSemana(ficha.lunes).reduce((total, p) => total + Object.keys(ficha.marcaciones[p.fecha]?.[p.hora] || {}).length, 0);
+    const horasConAsignatura = posicionesSemana(ficha.lunes).filter(p => asignaturaEnFicha(ficha, p.fecha, p.hora)).length;
     importacionPendiente = ficha;
-    document.getElementById("resumen-importacion").textContent = `${descripcionFicha(ficha)}. ${ficha.estudiantes.length} estudiantes; ${cantidad} marcaciones de ${ficha.estudiantes.length * 35} casillas.`;
+    document.getElementById("resumen-importacion").textContent = `${descripcionFicha(ficha)}. ${ficha.estudiantes.length} estudiantes; ${cantidad} marcaciones de ${ficha.estudiantes.length * 35} casillas; ${horasConAsignatura} de 35 horas con asignatura.`;
     document.getElementById("advertencia-importacion").textContent = existente
-        ? `Esta ficha reemplazará las asistencias de ${descripcionFicha(ficha)}, incluidas las casillas vacías. Las demás semanas no cambiarán. Descarga primero la versión actual si necesitas conservarla.`
+        ? `Esta ficha reemplazará las asistencias y asignaturas de ${descripcionFicha(ficha)}, incluidas las casillas vacías y las horas sin asignar. Las demás semanas no cambiarán. Descarga primero la versión actual si necesitas conservarla.`
         : "Se incorporará esta semana al espacio de trabajo. Las demás semanas no cambiarán.";
     const confirmar = document.getElementById("confirmar-importacion");
     confirmar.textContent = existente ? "Reemplazar ficha" : "Incorporar ficha";
